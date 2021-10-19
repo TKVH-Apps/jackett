@@ -74,6 +74,16 @@ spec:
         - name: jackett-secrets
           mountPath: "/mnt/vault"
           readOnly: true
+        readinessProbe:
+          tcpSocket:
+            port: jackett
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          tcpSocket:
+            port: jackett
+          initialDelaySeconds: 15
+          periodSeconds: 20
       volumes:
       - name: jackett
         persistentVolumeClaim:
