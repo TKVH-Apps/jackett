@@ -1,0 +1,89 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: jackett
+  labels:
+    app: jackett
+    part-of: jackett
+  annotations:
+    keel.sh/policy: force
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@hourly"
+    keel.sh/match-tag: true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jackett
+      part-of: jackett
+  template:
+    metadata:
+      labels:
+        app: jackett
+        part-of: jackett
+    spec:
+      serviceAccountName: jackett
+      containers:
+      - name: jackett
+#        securityContext:
+#          capabilities:
+#            add:
+#              - NET_ADMIN
+        image: dyonr/jackettvpn:latest
+        ports:
+        - name: jackett
+          containerPort: 9117
+        env:
+        - name: VPN_ENABLED
+          value: "no"
+        - name: VPN_TYPE
+          value: "openvpn"
+        - name: VPN_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: jackett
+              key: VPN_USERNAME
+        - name: VPN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: jackett
+              key: VPN_PASSWORD
+        - name: WEBUI_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: jackett
+              key: WEBUI_PASSWORD
+        - name: LAN_NETWORK
+          valueFrom:
+            secretKeyRef:
+              name: jackett
+              key: LAN_NETWORK
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: UMASK
+          value: "022"
+        - name: WEBUI_PORT
+          value: "9117"
+        volumeMounts:
+        - name: jackett
+          mountPath: /config
+#        - name: dev-net-tun
+#          mountPath: /dev/net/tun
+        - name: jackett-secrets
+          mountPath: "/mnt/vault"
+          readOnly: true
+      volumes:
+      - name: jackett
+        persistentVolumeClaim:
+          claimName: jackett
+      - name: jackett-secrets
+        csi:
+          driver: "secrets-store.csi.k8s.io"
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "jackett"
+#      - name: dev-net-tun
+#        hostPath:
+#          path: /dev/net/tun
