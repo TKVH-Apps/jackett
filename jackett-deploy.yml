@@ -74,6 +74,11 @@ spec:
         - name: jackett-secrets
           mountPath: "/mnt/vault"
           readOnly: true
+        resources:
+          limits:
+            memory: 128Mi
+          requests:
+            memory: 64Mi
         readinessProbe:
           tcpSocket:
             port: jackett
